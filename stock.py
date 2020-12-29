@@ -7,6 +7,7 @@ import datetime as dt
 import matplotlib.pyplot as plt
 import matplotlib.dates as md
 import numpy as np
+import alert
 
 
 APIKEY = "5893739aa667bc7d8916c612ece7baee"  # financialmodelinggrep.com
@@ -24,6 +25,8 @@ class StockData:
             ax.xaxis.set_major_formatter(md.DateFormatter("%H:%M:%S"))
             plt.xlabel("Time")
             plt.ylabel("Price")
+        self.low = None
+        self.high = None
 
     def search(self, query):
         url = (
@@ -52,8 +55,10 @@ class StockData:
         )
         try:
             resp = requests.get(url).json()[0]
+            # print(resp)
         except Exception as e:
             print(e)
+            exit()
         # resp = requests.get(url).json()[0]
         print(
             "---------------------------"
@@ -131,17 +136,31 @@ class StockData:
     def update_real_time_plot(self, symbol, high_line, low_line):
         for i in range(1000):
             timestamp, high_datas, stock_name = self.get_time_series_data(symbol)
+            _high_data = []
+            _timestamp = []
+            #filter null datas
+            for idx, dat in enumerate(high_datas):
+                if dat is not None:
+                    _high_data.append(dat)
+                    _timestamp.append(timestamp[idx])
+            #merging filtered data
+            timestamp = _timestamp
+            high_datas = _high_data
+            timestamp = _timestamp
             plt.title(stock_name)
             plt.plot(timestamp, high_datas)
-            plt.plot(timestamp[-1], high_datas[-1], 'yo')
+            plt.plot(timestamp[-1], high_datas[-1], 'y.')
 
             #plot min line
             if low_line is not None:
+                self.low = low_line
+                print(self.low)
                 horiz_line_data = np.array([int(low_line) for i in range(len(timestamp))])
                 plt.plot(timestamp, horiz_line_data, 'r--')
 
             #plot thresold_high line
             if high_line is not None:
+                self.high = high_line
                 horiz_line_data = np.array([int(high_line) for i in range(len(timestamp))])
                 plt.plot(timestamp, horiz_line_data, 'y--')
 
@@ -151,18 +170,22 @@ class StockData:
 
             plt.pause(INTERVAL)
             plt.clf()
-        plt.show()
+        # plt.show()
 
     # TODO
     def analyze(self, timestamp, data):
         #open, close, high low ---> of last data point
         last_point_stats = [data['open'][-1], data['close'][-1], data['high'][-1], data['low'][-1]]
-        current_stat_animated_line =  'low: ' + fg(1) + str(last_point_stats[3]) +  '   high: ' + fg(10) + str(last_point_stats[2]) + attr(0) + str(last_point_stats[0]) + "  " + str(last_point_stats[1])
-        self.notify(current_stat_animated_line)
+        current_stat_animated_line =  '↓ ' + fg(1) + str(last_point_stats[3]) + attr(0) +  '   ↑ ' + fg(10) + str(last_point_stats[2]) + attr(0)# + str(last_point_stats[0]) + "  " + str(last_point_stats[1])
+        self.notify(current_stat_animated_line, last_point_stats[2])
 
     # Todo
-    def notify(self, line):
-        # if analysis result is good notify user
+    def notify(self, line, current_price):
+        try:
+            if current_price < self.low:
+                alert.play()
+        except:
+            pass
         print(line)
 
 
