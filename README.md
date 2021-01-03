@@ -21,6 +21,11 @@ This project uses a number of open source projects to work properly:
 And of course this project itself is open source with a public repository
 on GitHub.
 
+### Usage
+```
+python3 stock.py -p SBIN
+```
+
 ### Todos
 
 - Make Moving avarages charts available from command line
