@@ -8,12 +8,13 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as md
 import numpy as np
 import alert
+from prediction import SMAFinder
 
 
 APIKEY = "5893739aa667bc7d8916c612ece7baee"  # financialmodelinggrep.com
 # APIKEY = "c48f471f84227f3a7175af3785b7e365"
 EXCHANGE_NAME = "NSE"
-INTERVAL = 5  # in sec
+INTERVAL = 10  # in sec
 
 
 class StockData:
@@ -117,11 +118,11 @@ class StockData:
         url = (
             "https://query1.finance.yahoo.com/v8/finance/chart/"
             + symbol
-            + ".NS?region=IN&lang=en-IN&includePrePost=false&interval=1m&range=1d&corsDomain=in.finance.yahoo.com&.tsrc=finance"
+            + ".NS?region=IN&lang=en-IN&includePrePost=false&interval=5m&range=1d&corsDomain=in.finance.yahoo.com&.tsrc=finance"
         )
         resp = requests.get(url).json()
         timestamp = resp["chart"]["result"][0]["timestamp"]
-        high_datas = resp["chart"]["result"][0]["indicators"]["quote"][0]["high"]
+        high_datas  = resp["chart"]["result"][0]["indicators"]["quote"][0]["high"]
         low_datas = resp["chart"]["result"][0]["indicators"]["quote"][0]["low"]
         open_datas = resp["chart"]["result"][0]["indicators"]["quote"][0]["open"]
         close_datas = resp["chart"]["result"][0]["indicators"]["quote"][0]["close"]
@@ -130,31 +131,32 @@ class StockData:
             timestamp[indx] = dt.datetime.fromtimestamp(int(ts))
 
         # for every get request we analyze data
-        self.analyze(timestamp, {'open':open_datas, 'close':close_datas, 'high': high_datas, 'low':low_datas})
-        return [timestamp, high_datas, stock_name]
+        self.analyze(timestamp, {'open':open_datas, 'close':close_datas, 'high': high_datas , 'low':low_datas})
+        return [timestamp, close_datas , stock_name]
 
     def update_real_time_plot(self, symbol, high_line, low_line):
         for i in range(1000):
-            timestamp, high_datas, stock_name = self.get_time_series_data(symbol)
+            timestamp, closing_datas , stock_name = self.get_time_series_data(symbol)
             _high_data = []
             _timestamp = []
             #filter null datas
-            for idx, dat in enumerate(high_datas):
+            for idx, dat in enumerate(closing_datas ):
                 if dat is not None:
                     _high_data.append(dat)
                     _timestamp.append(timestamp[idx])
             #merging filtered data
             timestamp = _timestamp
-            high_datas = _high_data
+            closing_datas  = _high_data
             timestamp = _timestamp
             plt.title(stock_name)
-            plt.plot(timestamp, high_datas)
-            plt.plot(timestamp[-1], high_datas[-1], 'y.')
+            plt.plot(timestamp, closing_datas )
+            plt.plot(timestamp[-1], closing_datas [-1], 'y.')
+            
 
             #plot min line
             if low_line is not None:
                 self.low = low_line
-                print(self.low)
+                # print(self.low)
                 horiz_line_data = np.array([int(low_line) for i in range(len(timestamp))])
                 plt.plot(timestamp, horiz_line_data, 'r--')
 
@@ -164,13 +166,25 @@ class StockData:
                 horiz_line_data = np.array([int(high_line) for i in range(len(timestamp))])
                 plt.plot(timestamp, horiz_line_data, 'y--')
 
-            # #vertical data line
+            #print sma5
+            sf = SMAFinder(symbol)
+            sf.data = closing_datas
+            sma5 = sf.smart_sma(5)
+
+            #print sma15
+            plt.plot(timestamp[5:], sma5, 'm', label='SMA5')
+            sma15 = sf.smart_sma(15)
+            plt.plot(timestamp[15:], sma15, 'g', label='SMA15')
+
+            plt.legend()
+            
+            #vertical data line
             # plt.axvline(x=timestamp[-1], ls='-.', )
 
 
             plt.pause(INTERVAL)
             plt.clf()
-        # plt.show()
+        plt.show()
 
     # TODO
     def analyze(self, timestamp, data):
@@ -181,8 +195,10 @@ class StockData:
 
     # Todo
     def notify(self, line, current_price):
+        # print(current_price, self.low)
         try:
             if current_price < self.low:
+                print('Buy Now!')
                 alert.play()
         except:
             pass
