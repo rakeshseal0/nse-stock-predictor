@@ -24,6 +24,7 @@ class StockData:
             # %formatting x axis
             _, ax = plt.subplots(figsize=(8, 6))
             ax.xaxis.set_major_formatter(md.DateFormatter("%H:%M:%S"))
+            self.ax = ax
             plt.xlabel("Time")
             plt.ylabel("Price")
         self.low = None
@@ -118,7 +119,7 @@ class StockData:
         url = (
             "https://query1.finance.yahoo.com/v8/finance/chart/"
             + symbol
-            + ".NS?region=IN&lang=en-IN&includePrePost=false&interval=5m&range=1d&corsDomain=in.finance.yahoo.com&.tsrc=finance"
+            + ".NS?region=IN&lang=en-IN&includePrePost=false&interval=1m&range=1d&corsDomain=in.finance.yahoo.com&.tsrc=finance"
         )
         resp = requests.get(url).json()
         timestamp = resp["chart"]["result"][0]["timestamp"]
@@ -136,6 +137,7 @@ class StockData:
 
     def update_real_time_plot(self, symbol, high_line, low_line):
         for i in range(1000):
+            # self.ax.xaxis.set_major_formatter(md.DateFormatter("%H:%M:%S"))
             timestamp, closing_datas , stock_name = self.get_time_series_data(symbol)
             _high_data = []
             _timestamp = []
@@ -166,15 +168,25 @@ class StockData:
                 horiz_line_data = np.array([int(high_line) for i in range(len(timestamp))])
                 plt.plot(timestamp, horiz_line_data, 'y--')
 
-            #print sma5
+
+            ############ print SMA #############
             sf = SMAFinder(symbol)
             sf.data = closing_datas
-            sma5 = sf.smart_sma(5)
 
-            #print sma15
-            plt.plot(timestamp[5:], sma5, 'm', label='SMA5')
-            sma15 = sf.smart_sma(15)
-            plt.plot(timestamp[15:], sma15, 'g', label='SMA15')
+            #print sma1
+            # window1 = 5
+            # sma1 = sf.smart_sma(window1)
+            # plt.plot(timestamp[window1:], sma1, 'm', label='SMA' + str(window1))
+
+            #print sma2
+            window2 = 50
+            sma2 = sf.smart_sma(window2)
+            plt.plot(timestamp[window2:], sma2, 'g', label='SMA' + str(window2))
+
+            #print ema
+            window = 5
+            ema = sf.smart_ema(window)
+            plt.plot(timestamp[window:], ema, 'y', label='EMA' + str(window))
 
             plt.legend()
             

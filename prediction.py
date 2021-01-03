@@ -11,33 +11,20 @@ class SMAFinder():
     def __init__(self, symbol):
         self.symbol = symbol
         self.data = None
-        self.timestamps = None
     def load_data(self, day=5):
         if self.data is None:
             url = "https://query1.finance.yahoo.com/v8/finance/chart/"  + self.symbol+ ".NS?region=IN&lang=en-IN&includePrePost=false&interval=15m&range=" + str(day) +"d&corsDomain=in.finance.yahoo.com&.tsrc=finance"
             resp = requests.get(url).json()
             closing_vals = resp["chart"]["result"][0]["indicators"]["quote"][0]["close"]
-            timestamps = resp["chart"]["result"][0]["timestamp"]
             self.data = closing_vals
-            self.timestamps = timestamps
-        return ({'data': self.data, 'Date': self.timestamps})
+        #remove null values from data
+        valid_data = []
+        for d in self.data:
+            if d is not None:
+                valid_data.append(d)
+        self.data = valid_data
+        return ({'data': self.data})
 
-    # def sma(self, window):
-    #     d = self.load_data()
-    #     #taking last N data for calculating SMA
-    #     d['data'] = d['data'][-1*(window):]
-    #     filtered_data = []
-    #     timestamp_of_sma = None
-    #     for idx,dd in enumerate(d['data']):
-    #         if dd is not None:
-    #             filtered_data.append(dd)
-    #     #we are calculating sma for last date
-    #     timestamp_of_sma = d['Date'][-1]
-
-    #     data_sum = sum(filtered_data)
-    #     sma = data_sum/len(filtered_data)
-
-    #     print('sma_' + str(len(filtered_data)), sma, dt.datetime.fromtimestamp(int(timestamp_of_sma)))
 
     def smart_sma(self, window):
         d = self.load_data()
@@ -49,8 +36,21 @@ class SMAFinder():
         for idx,p in enumerate(valid_points):
             sma_data = data[idx+1:idx+window+1]
             sma_points.append(sum(sma_data)/window)
+        # print(sma_points)
         return sma_points
-        
+
+    def smart_ema(self, window):
+        d = self.load_data()
+        data = d['data']
+        valid_points = data[window:]
+        ema0 = sum(data[:window])/window
+        ema_points = []
+        for p in valid_points:
+            ema = (p-ema0)*(2/(window+1)) + ema0
+            ema0 = ema
+            ema_points.append(ema)
+        # print(ema_points)
+        return(ema_points)
             
         
 
@@ -64,4 +64,5 @@ if __name__ == "__main__":
     # sf.sma(30)
     # sf.sma(60)
     # sf.sma(70)
-    sf.smart_sma(10)
+    # sf.smart_sma(10)
+    # sf.smart_ema(10)
