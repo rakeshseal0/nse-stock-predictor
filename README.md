@@ -1,6 +1,6 @@
-# NSE-Stock-Predictor
+# NSE-Stock-Utils
 
-NSE-Stock-Predictor is a command line tool that is able to plot real time charts and different types of moving avarages graph(SMA_N, EMA) on command line.
+NSE-Stock-Utils is a command line tool that is able to plot real time charts and different types of moving avarages graph(SMA_N, EMA) on command line.
 
 - Plot real time NSE stock data.
 - Plot different types of moving avarages.
@@ -23,6 +23,7 @@ And of course this project itself is open source with a public repository
 on GitHub.
 
 ### Usage
+
 ```
 python3 stock.py -p <NSE_COMPANY_SYMBOL>
 ```
