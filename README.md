@@ -23,7 +23,7 @@ on GitHub.
 
 ### Usage
 ```
-python3 stock.py -p SBIN
+python3 stock.py -p <NSE_COMPANY_SYMBOL>
 ```
 
 ### Todos
