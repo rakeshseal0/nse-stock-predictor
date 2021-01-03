@@ -12,7 +12,6 @@ from prediction import SMAFinder
 
 
 APIKEY = "5893739aa667bc7d8916c612ece7baee"  # financialmodelinggrep.com
-# APIKEY = "c48f471f84227f3a7175af3785b7e365"
 EXCHANGE_NAME = "NSE"
 INTERVAL = 10  # in sec
 
