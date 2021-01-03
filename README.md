@@ -6,6 +6,7 @@ NSE-Stock-Predictor is a command line tool that is able to plot real time charts
 - Plot different types of moving avarages.
 - Get important stats about a stock on Command line.
 - Search for stocks with keyword from command line.
+- Get voice alert in dota2 voice whenever marmket hits a low value that you set.
 
 # New Features!
 
