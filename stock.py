@@ -13,7 +13,7 @@ from prediction import SMAFinder
 
 APIKEY = "5893739aa667bc7d8916c612ece7baee"  # financialmodelinggrep.com
 EXCHANGE_NAME = "NSE"
-INTERVAL = 10  # in sec
+INTERVAL = 5  # in sec
 
 
 class StockData:
@@ -28,6 +28,7 @@ class StockData:
             plt.ylabel("Price")
         self.low = None
         self.high = None
+        self.timestamps = None
 
     def search(self, query):
         url = (
@@ -127,6 +128,7 @@ class StockData:
         open_datas = resp["chart"]["result"][0]["indicators"]["quote"][0]["open"]
         close_datas = resp["chart"]["result"][0]["indicators"]["quote"][0]["close"]
         stock_name = resp["chart"]["result"][0]["meta"]["symbol"]
+        self.timestamps = timestamp
         for indx, ts in enumerate(timestamp):
             timestamp[indx] = dt.datetime.fromtimestamp(int(ts))
 
@@ -188,14 +190,24 @@ class StockData:
             # plt.plot(timestamp[window1:], sma1, 'm', label='SMA' + str(window1))
 
             # print sma2
-            window2 = 50
+            window2 = 15
             sma2 = sf.smart_sma(window2)
-            plt.plot(timestamp[window2:], sma2, "g", label="SMA" + str(window2))
+            plt.plot(timestamp[window2:], sma2, "c", label="SMA" + str(window2))
 
             # print ema
             window = 5
             ema = sf.smart_ema(window)
-            plt.plot(timestamp[window:], ema, "y", label="EMA" + str(window))
+            plt.plot(timestamp[window:], ema, "lightcoral", label="EMA" + str(window))
+
+            #plot probable buy points
+            tp = sf.predict_buy_point(ema, sma2, self.timestamps)
+            for dp in tp:
+                plt.plot(dp[1], dp[0], "g^")
+
+            #plot probable sell points
+            tp1 = sf.predict_sell_point(ema, sma2, self.timestamps)
+            for dp in tp1:
+                plt.plot(dp[1], dp[0], "rv")
 
             plt.legend()
 

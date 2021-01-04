@@ -1,10 +1,5 @@
 import requests
-
-# from colored import fg, attr
 import matplotlib.pyplot as plt
-
-# import pandas as pd
-# import numpy as np
 import datetime as dt
 
 
@@ -13,17 +8,19 @@ class SMAFinder:
         self.symbol = symbol
         self.data = None
 
-    def load_data(self, day=5):
+    def load_data(self, day=1):
         if self.data is None:
             url = (
                 "https://query1.finance.yahoo.com/v8/finance/chart/"
                 + self.symbol
-                + ".NS?region=IN&lang=en-IN&includePrePost=false&interval=15m&range="
+                + ".NS?region=IN&lang=en-IN&includePrePost=false&interval=1m&range="
                 + str(day)
                 + "d&corsDomain=in.finance.yahoo.com&.tsrc=finance"
             )
             resp = requests.get(url).json()
             closing_vals = resp["chart"]["result"][0]["indicators"]["quote"][0]["close"]
+            timestamps = timestamp = resp["chart"]["result"][0]["timestamp"]
+            self.timestamps = timestamps
             self.data = closing_vals
         # remove null values from data
         valid_data = []
@@ -58,6 +55,39 @@ class SMAFinder:
             ema_points.append(ema)
         # print(ema_points)
         return ema_points
+    def predict_buy_point(self, small_window_data, large_window_data, timestamps):
+        self.timestamps = timestamps[-1*(len(large_window_data)):]
+        #data set should be of same length
+        datapoints = []
+        small_window_data = small_window_data[-1*len(large_window_data):]
+        print(len(small_window_data), len(large_window_data), len(timestamps))
+        for idx,_ in enumerate(small_window_data):
+            try:
+                if (small_window_data[idx] < large_window_data[idx]) and (small_window_data[idx+1] >= large_window_data[idx+1]):
+                    ts = self.timestamps[idx]
+                    datapoints.append([large_window_data[idx], ts])
+            except:
+                pass
+        return (datapoints)
+
+    def predict_sell_point(self, small_window_data, large_window_data, timestamps):
+        self.timestamps = timestamps[-1*(len(large_window_data)):]
+        #data set should be of same length
+        datapoints = []
+        small_window_data = small_window_data[-1*len(large_window_data):]
+        for idx,_ in enumerate(small_window_data):
+            try:
+                if (small_window_data[idx] > large_window_data[idx]) and (small_window_data[idx+1] <= large_window_data[idx+1]):
+                    ts = self.timestamps[idx]
+                    datapoints.append([large_window_data[idx], ts])
+            except:
+                pass
+                # print(idx, len(small_window_data))
+        return (datapoints)
+
+                
+
+
 
 
 if __name__ == "__main__":
@@ -69,5 +99,6 @@ if __name__ == "__main__":
     # sf.sma(30)
     # sf.sma(60)
     # sf.sma(70)
-    # sf.smart_sma(10)
-    # sf.smart_ema(10)
+    sm = sf.smart_sma(20)
+    em = sf.smart_ema(10)
+    sf.predict_transaction_point(em, sm, sf.timestamps)
